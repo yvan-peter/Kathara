@@ -9,6 +9,8 @@ import os
 import utils as u
 import depgen as dpg
 from collections import OrderedDict
+from netaddr import IPAddress, IPNetwork
+from math import log, ceil
 
 DEBUG = True
 PRINT = False
@@ -170,11 +172,20 @@ def create_commands(machines, links, options, metadata, path, execbash=False, no
     create_network_template = docker + ' network create '
     create_network_commands = []
     network_counter = 0
-    for link in links:
-        create_network_commands.append(create_network_template + prefix + link + " --subnet=172." + str(19+network_counter) + ".0.0/16 --gateway=172." + str(19+network_counter) + ".0.1")
-        lab_links_text += prefix + link + ' '
-	network_counter += 1
-
+    if "NETKIT_NET_PREFIX" in os.environ:
+        ip = IPNetwork(os.environ["NETKIT_NET_PREFIX"])
+        needed_prefix = ip.prefixlen + int(ceil(log(len(links), 2)))
+        subnets = list(ip.subnet(needed_prefix))
+        for link in links:
+            create_network_commands.append(create_network_template + prefix + link + " --subnet=" + str(subnets[network_counter]) + " --gateway=" + str(subnets[network_counter][1]))
+            lab_links_text += prefix + link + ' '
+	    network_counter += 1
+    else:
+        for link in links:
+            create_network_commands.append(create_network_template + prefix + link + " --subnet=172." + str(18+network_counter) + ".0.0/16 --gateway=172." + str(18+network_counter) + ".0.1")
+            lab_links_text += prefix + link + ' '
+	    network_counter += 1
+        
     # writing the network list in the temp file
     if not execbash:
         if not PRINT: u.write_temp(lab_links_text, u.generate_urlsafe_hash(path) + '_links', PLATFORM, file_mode="w+")

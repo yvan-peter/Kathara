@@ -13,7 +13,7 @@ except ImportError: #windows
     pass
 
 DEBUG = nc.DEBUG
-nc.DEBUG = False
+nc.DEBUG = True #False
 
 if nc.PLATFORM != nc.WINDOWS:
         prefix = 'netkit_' + str(os.getuid()) + '_'
@@ -131,7 +131,7 @@ args, unknown = parser.parse_known_args()
 if nc.PLATFORM == nc.WINDOWS:
     machine_path = os.path.join(os.environ["NETKIT_HOME"], "temp/labs/" + prefix + args.machine_name)
 else:
-    machine_path =  os.path.join(pwd.getpwuid(os.getuid()).pw_dir, "netkit_temp/labs/" + prefix + args.machine_name)
+    machine_path = os.path.join(os.environ["NETKIT_TEMP"], "labs/" + prefix + args.machine_name)
 
 image = ""
 if args.image:
